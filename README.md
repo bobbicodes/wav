@@ -1,10 +1,10 @@
 # wav
 
-FIXME: my new library.
+Library for working with PCM data
 
 ## Usage
 
-FIXME: write usage documentation!
+See `src/wav.clj`
 
 Build a deployable jar of this library:
 
@@ -20,7 +20,7 @@ Deploy it to Clojars -- needs `CLOJARS_USERNAME` and `CLOJARS_PASSWORD` environm
 
 ## License
 
-Copyright © 2020 Porky
+Copyright © 2020 Bobby Towers
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
