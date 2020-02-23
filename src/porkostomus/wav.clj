@@ -1,6 +1,7 @@
 (ns porkostomus.wav
   (:require [clojure.java.io :as io]
-            [hiphip.double :as dbl])
+            [hiphip.double :as dbl]
+            [primitive-math :as p])
   (:import [java.nio ByteBuffer]
            [java.util.concurrent LinkedBlockingQueue]
            [javax.sound.sampled
@@ -48,19 +49,19 @@
                  num-chunks#           (-> ~num-samples (/ chunk-size#) Math/ceil long)]
              (concat
               (for [chunk-num# (range (dec num-chunks#))]
-                (let [base-index# (* (long chunk-num#) chunk-size#)]
+                (let [base-index# (p/* (long chunk-num#) chunk-size#)]
                   (for [~c (range chans#)]
                     (dbl/amake [i# chunk-size#]
-                               (let [~index (+ i# base-index#)]
+                               (let [~index (p/+ i# base-index#)]
                                  ~expr)))))
               ;; Handle the last chunk specially, since it's probably
               ;; shorter.
-              [(let [chunks-so-far#     (- num-chunks# 1)
-                     samples-so-far#    (* chunk-size# chunks-so-far#)
-                     samples-remaining# (- ~num-samples samples-so-far#)]
+              [(let [chunks-so-far#     (p/- num-chunks# 1)
+                     samples-so-far#    (p/* chunk-size# chunks-so-far#)
+                     samples-remaining# (p/- ~num-samples samples-so-far#)]
                  (for [~c (range chans#)]
                    (dbl/amake [i# samples-remaining#]
-                              (let [~index (+ i# (* (- num-chunks# 1) chunk-size#))]
+                              (let [~index (p/+ i# (p/* (p/- num-chunks# 1) chunk-size#))]
                                 ~expr))))])))))))
 
 (defsound constant duration chans
@@ -80,10 +81,10 @@
   which changes linearly from `start` to `end`."
   [start end]
   [sample-rate num-samples i c]
-  (+ (double start)
-       (* (- (double end)
+  (p/+ (double start)
+       (p/* (p/- (double end)
                  (double start))
-            (/ (double i)
+            (p/div (double i)
                    (double num-samples)))))
 
 (defsound fn-sound duration chans
@@ -92,20 +93,20 @@
   seconds."
   [f]
   [sample-rate num-samples i c]
-  (f c (/ (double i) (double sample-rate))))
+  (f c (p/div (double i) (double sample-rate))))
 
 (defn sinusoid
   "Returns a single-channel sound of `duration` and `frequency`"
   [^double duration ^double frequency]
   (fn-sound duration 1 (fn sinusoid-fn [^long c ^double t]
-                         (Math/sin (* t frequency 2.0 Math/PI)))))
+                         (Math/sin (p/* t frequency 2.0 Math/PI)))))
 
 (defn square-wave
   "Produces a single-channel sound that toggles between 1.0 and -1.0
   at frequency `freq`."
   [^double duration ^double frequency]
   (fn-sound duration 1 (fn square-wave-fn [^long c ^double t]
-                         (let [x (-> t (* frequency 2.0) long)]
+                         (let [x (-> t (p/* frequency 2.0) long)]
                            (if (even? x) 1.0 -1.0)))))
 
 (defn- to-double-arrays
@@ -122,13 +123,13 @@
         ;; bytes-per-sample is a parameter. Should probably have
         ;; something that knows how to read from a ByteBuffer given a
         ;; number of bits.
-        (dbl/aset arr n (/ (double (.getShort bb)) 32768.0))))
+        (dbl/aset arr n (p/div (double (.getShort bb)) 32768.0))))
     arrs))
 
 (defn- sample-chunks
   "Return a seq of chunks from an AudioInputStream."
   [^AudioInputStream ais ^long chans ^long bytes-per-sample ^long chunk-size]
-  (let [buf        (byte-array (* chunk-size chans bytes-per-sample))
+  (let [buf        (byte-array (p/* chunk-size chans bytes-per-sample))
         bytes-read (.read ais buf)]
     (when (pos? bytes-read)
       (lazy-seq
@@ -200,7 +201,7 @@
   [f]
   (let [max-short-as-double (double Short/MAX_VALUE)]
     `(let [clamped# (-> ~f (min 1.0) (max -1.0))]
-       (short (* ~max-short-as-double clamped#)))))
+       (short (p/* ~max-short-as-double clamped#)))))
 
 (defn- sampled-input-stream
   "Returns an implementation of `InputStream` over the data in `s`."
@@ -250,7 +251,7 @@
              (dotimes [n frames-to-read]
                  ;; TODO: Find a more efficient way to do this
                (doseq [arr head-chunk]
-                 (.putShort bb (shortify (dbl/aget arr (+ start-frame n))))))
+                 (.putShort bb (shortify (dbl/aget arr (p/+ start-frame n))))))
              (.position bb 0)
              (.get bb buf off bytes-to-read)
              (if read-remainder?
@@ -273,6 +274,7 @@
                      (io/file path)))
 
 (comment
+(square-wave 1.0 220.0)
   (save (square-wave 1.0 220.0)
         "test.wav" 44100)
   )
