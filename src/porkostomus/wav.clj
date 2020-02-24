@@ -5,7 +5,7 @@
   (with-open [in  (io/input-stream file)
               out (java.io.ByteArrayOutputStream.)]
     (io/copy in out)
-    (map #(bit-and 0xFF %) (.toByteArray out))))
+    (map #(format "%02x" %) (.toByteArray out))))
 
 (defn bytes->hex [bytes]
   (apply str (for [b bytes] (format "%02x" b))))
@@ -23,6 +23,7 @@
   (apply str (map char (hex-bytes file 0 4))))
 
 (comment
+  (format "%x" -84)
   (bit-and 0xFF 52)
   (take 8 (file->bytes "resources/test.wav"))
   (riff-id  "resources/test.wav")
