@@ -1,6 +1,6 @@
 # wav
 
-Library for working with PCM data. Heavily based on [dynne](https://github.com/candera/dynne).
+Library for working with PCM data.
 
 ## Usage
 
