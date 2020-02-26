@@ -25,17 +25,21 @@
    (take (- to from)
          (drop from (file->bytes file)))))
 
-(defn riff-id [file]
-  (apply str (map char (dec-bytes file 0 4))))
+(defn ascii-val [bytes]
+  (apply str (map char bytes)))
 
-(defn chunk-size [file]
-  (Integer/decode (str "0x" (apply str (reverse (hex-bytes file 4 8))))))
+(defn dec-val [bytes]
+  (Integer/decode (str "0x" (apply str (reverse bytes)))))
+
+(defn riff-chunk [file]
+  {:ckID (ascii-val (dec-bytes file 0 4))
+   :cksize (dec-val (hex-bytes file 4 8))
+   :WAVEID (ascii-val (dec-bytes file 8 12))})
+
+(defn fmt-chunk [file]
+  {:ckID (ascii-val (dec-bytes file 12 16))})
 
 (comment
-  (format "%x" -84)
-  (bit-and 0xFF 52)
-  (take 8 (file->hex "resources/test.wav"))
-  (riff-id  "resources/test.wav")
-  (chunk-size  "resources/test.wav")
-  (hex-bytes "resources/test.wav" 4 8)
+  (riff-chunk  "resources/test.wav")
+  (fmt-chunk "resources/test.wav")
   )
