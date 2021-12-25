@@ -70,6 +70,12 @@
     72 (pcm-72 file)
     "Unrecognized file type"))
 
+(defn write-wav [file bytes]
+  (with-open [out (io/output-stream (io/file file))]
+    (.write out bytes)))
+
 (comment
+  (file->hex "resources/test.wav")
+  (file->bytes "resources/test.wav")
   (wav-info "resources/test.wav")
   (wav-info "resources/saw.wav"))
