@@ -55,7 +55,7 @@
    :nAvgBytesPerSec (decimal file 28 32)
    :nBlockAlign     (decimal file 32 34)
    :wBitsPerSample  (decimal file 34 36)
-   :dataID          (decimal file 36 40)
+   :dataID          (ascii file 36 40)
    :datasize        (decimal file 40 44)})
 
 (defn header-size
@@ -78,4 +78,22 @@
   (file->hex "resources/test.wav")
   (file->bytes "resources/test.wav")
   (wav-info "resources/test.wav")
-  (wav-info "resources/saw.wav"))
+  (wav-info "resources/saw.wav")
+  (wav-info "resources/nes-tri.wav")
+  (partition 4 (drop 44 (file->bytes "resources/nes-tri.wav")))
+  )
+
+
+(defn sinusoid
+  "Returns a single-channel sound of `duration` and `frequency`"
+  [duration frequency]
+  (Math/sin (* duration frequency 2.0 Math/PI)))
+
+(defn square-wave
+  "Produces a single-channel sound that toggles between 1.0 and -1.0
+  at frequency `freq`."
+  [duration frequency]
+  (let [x (-> duration (* frequency 2.0) long)]
+    (if (even? x) 1.0 -1.0)))
+
+(defn tri [])
